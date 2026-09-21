@@ -10,7 +10,9 @@ ip link show "$LAN_IF" >/dev/null 2>&1 || die "interface $LAN_IF not found"
 ip link show "$WAN_IF" >/dev/null 2>&1 || die "interface $WAN_IF not found"
 
 # Enable ip forward in the container's network namespace
-if [ -w /proc/sys/net/ipv4/ip_forward ]; then
+if [ "$(cat /proc/sys/net/ipv4/ip_forward)" = "1" ]; then
+  log "ip_forward already enabled"
+elif [ -w /proc/sys/net/ipv4/ip_forward ]; then
   echo 1 > /proc/sys/net/ipv4/ip_forward
   log "ip_forward enabled for this session ($(cat /proc/sys/net/ipv4/ip_forward))"
 else
