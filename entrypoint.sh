@@ -9,6 +9,10 @@ die() { echo "[entrypoint] ERROR: $*" >&2; exit 1; }
 ip link show "$LAN_IF" >/dev/null 2>&1 || die "interface $LAN_IF not found"
 ip link show "$WAN_IF" >/dev/null 2>&1 || die "interface $WAN_IF not found"
 
+# Configure network
+ip link set dev "$LAN_IF" up
+ip address add "$LAN_ADDRESS/24" dev "$LAN_IF"
+
 # Enable ip forward in the container's network namespace
 if [ "$(cat /proc/sys/net/ipv4/ip_forward)" = "1" ]; then
   log "ip_forward already enabled"
