@@ -9,15 +9,17 @@ die() { echo "[entrypoint] ERROR: $*" >&2; exit 1; }
 ip link show "$LAN_IF" >/dev/null 2>&1 || die "interface $LAN_IF not found"
 ip link show "$WAN_IF" >/dev/null 2>&1 || die "interface $WAN_IF not found"
 
-CONFIGURE_LAN="${CONFIGURE_LAN:-true}"
-ENABLE_NAT="${ENABLE_NAT:-true}"
-
 if [ "$CONFIGURE_LAN" = "true" ]; then
   log "Configuring LAN"
 
   # Configure network
   ip link set dev "$LAN_IF" up
-  ip address replace "$LAN_ADDRESS/24" dev "$LAN_IF"
+
+  if [ "$ENABLE_KEEPALIVED" = "true" ]; then
+    log "ENABLE_KEEPALIVED=true, leaving $LAN_ADDRESS on $LAN_IF to keepalived"
+  else
+    ip address replace "$LAN_ADDRESS/24" dev "$LAN_IF"
+  fi
 else
   log "CONFIGURE_LAN=$CONFIGURE_LAN, skipping LAN interface configuration"
 fi
@@ -53,13 +55,26 @@ fi
 # Configure dnsmasq based on environment variables
 envsubst < /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
 
-# Run dnsmasq in the foreground, but keep this shell as PID 1 so signals
-# (e.g. ctrl-c / SIGINT, or `docker stop` / SIGTERM) are trapped and
-# forwarded to it, ensuring the container actually exits.
+if [ "$ENABLE_KEEPALIVED" = "true" ]; then
+  # Configure keepalived based on environment variables
+  envsubst < /etc/keepalived/keepalived.conf.template > /etc/keepalived/keepalived.conf
+fi
+
+# Run dnsmasq (and, if enabled, keepalived) in the foreground, but keep this
+# shell as PID 1 so signals (e.g. ctrl-c / SIGINT, or `docker stop` /
+# SIGTERM) are trapped and forwarded to them, ensuring the container
+# actually exits.
 log "Starting dnsmasq"
 dnsmasq --keep-in-foreground &
 dnsmasq_pid=$!
 
-trap 'log "received signal, stopping dnsmasq"; kill -TERM "$dnsmasq_pid" 2>/dev/null; wait "$dnsmasq_pid"; exit 0' INT TERM
+keepalived_pid=
+if [ "$ENABLE_KEEPALIVED" = "true" ]; then
+  log "Starting keepalived"
+  keepalived --dont-fork --log-console --vrrp &
+  keepalived_pid=$!
+fi
+
+trap 'log "received signal, stopping"; [ -n "$keepalived_pid" ] && kill -TERM "$keepalived_pid" 2>/dev/null; kill -TERM "$dnsmasq_pid" 2>/dev/null; [ -n "$keepalived_pid" ] && wait "$keepalived_pid" 2>/dev/null; wait "$dnsmasq_pid" 2>/dev/null; exit 0' INT TERM
 
 wait "$dnsmasq_pid"

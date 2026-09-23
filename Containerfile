@@ -1,10 +1,11 @@
 FROM docker.io/library/debian:trixie-slim
 
 RUN apt update && \
-  apt install -y --no-install-recommends dnsmasq iptables iproute2 gettext-base && \
+  apt install -y --no-install-recommends dnsmasq keepalived iptables iproute2 gettext-base && \
   rm -rf /var/lib/apt/lists/*
 
 COPY dnsmasq.conf /etc/dnsmasq.conf.template
+COPY keepalived.conf /etc/keepalived/keepalived.conf.template
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ENV WAN_IF=eth0 \
@@ -16,6 +17,8 @@ ENV WAN_IF=eth0 \
     DHCP_RANGE_END=10.0.0.200 \
     DHCP_NETMASK=255.255.255.0 \
     DHCP_LEASE_TIME=12h \
-    DOMAIN=lan
+    DOMAIN=lan \
+    ENABLE_KEEPALIVED=false \
+    KEEPALIVED_VIRTUAL_ROUTER_ID=51
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
