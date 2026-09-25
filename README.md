@@ -21,9 +21,11 @@ Configuration is made through environment variables.
 | Name                           | Default         | Description                                                                                                                        |
 | ------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `WAN_IF`                       | `eth0`          | Network interface connected to the WAN (upstream network).                                                                         |
+| `WAN_ADDRESS`                  |                 | Required. IP address of the WAN interface, used as the NAT source. Floated with `LAN_ADDRESS` when `ENABLE_KEEPALIVED=true`.       |
+| `WAN_NETMASK`                  | `255.255.255.0` | Netmask of the WAN network.                                                                                                        |
+| `WAN_GATEWAY`                  |                 | Required. Upstream gateway, installed as the default route on `WAN_IF`. Follows `WAN_ADDRESS` when `ENABLE_KEEPALIVED=true`.       |
 | `LAN_IF`                       | `eth1`          | Network interface connected to the LAN, served by dnsmasq for DNS/DHCP.                                                            |
 | `LAN_ADDRESS`                  | `10.0.0.254`    | IP address of the LAN interface; advertised to DHCP clients as the router and DNS server.                                          |
-| `CONFIGURE_LAN`                | `true`          | Whether to bring up `LAN_IF` and assign `LAN_ADDRESS` to it.                                                                       |
 | `ENABLE_NAT`                   | `true`          | Whether to enable `ip_forward` and install NAT/forwarding `iptables` rules.                                                        |
 | `DHCP_RANGE_START`             | `10.0.0.100`    | First address in the DHCP pool handed out to LAN clients.                                                                          |
 | `DHCP_RANGE_END`               | `10.0.0.200`    | Last address in the DHCP pool handed out to LAN clients.                                                                           |
@@ -37,7 +39,9 @@ Configuration is made through environment variables.
 
 Setting `ENABLE_KEEPALIVED=true` runs `keepalived` alongside `dnsmasq` and hands it ownership of `LAN_ADDRESS`
 on `LAN_IF` instead of assigning it statically. Run two Hermes containers with the same `LAN_ADDRESS` and
-`KEEPALIVED_VIRTUAL_ROUTER_ID`, and `keepalived` will float the address to whichever node is reachable,
-giving the virtual network a highly available gateway/DHCP/DNS server. Every node starts with the same
-priority, so which one currently holds the address is decided automatically by VRRP rather than configured
-per node. VRRP advertisements are unauthenticated, so only enable this on a LAN you trust.
+`KEEPALIVED_VIRTUAL_ROUTER_ID`, and `keepalived` will float the address to whichever node is reachable, giving
+the virtual network a highly available gateway/DHCP/DNS server. `WAN_ADDRESS` and the default route via
+`WAN_GATEWAY` are floated on `WAN_IF` in the same VRRP instance as `LAN_ADDRESS`, so they always move to the
+same node. Every node starts with the same priority, so which one currently holds the addresses is decided
+automatically by VRRP rather than configured per node. VRRP advertisements are unauthenticated, so only enable
+this on a LAN you trust.

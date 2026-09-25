@@ -6,6 +6,16 @@ if [ "$ENABLE_KEEPALIVED" != "true" ]; then
   exec /command/s6-svc -Od .
 fi
 
+# keepalived only accepts a prefix length, convert WAN_NETMASK (e.g. 255.255.255.0 -> 24)
+WAN_PREFIX=0
+for octet in $(echo "$WAN_NETMASK" | tr . ' '); do
+  while [ "$octet" -gt 0 ]; do
+    WAN_PREFIX=$((WAN_PREFIX + (octet & 1)))
+    octet=$((octet >> 1))
+  done
+done
+export WAN_PREFIX
+
 # Configure keepalived based on environment variables
 envsubst < /etc/keepalived/keepalived.conf.template > /etc/keepalived/keepalived.conf
 

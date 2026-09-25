@@ -14,8 +14,8 @@ COPY keepalived.conf /etc/keepalived/keepalived.conf.template
 COPY s6-overlay /etc/s6-overlay
 
 ENV WAN_IF=eth0 \
+    WAN_NETMASK=255.255.255.0 \
     LAN_IF=eth1 \
-    CONFIGURE_LAN=true \
     ENABLE_NAT=true \
     LAN_ADDRESS=10.0.0.254 \
     DHCP_RANGE_START=10.0.0.100 \
