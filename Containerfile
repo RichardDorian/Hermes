@@ -10,6 +10,7 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.3.2/s6-
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 COPY dnsmasq.conf /etc/dnsmasq.conf.template
+COPY keepalived.conf /etc/keepalived/keepalived.conf.template
 COPY s6-overlay /etc/s6-overlay
 
 ENV WAN_IF=eth0 \
@@ -21,7 +22,9 @@ ENV WAN_IF=eth0 \
     DHCP_RANGE_END=10.0.0.200 \
     DHCP_NETMASK=255.255.255.0 \
     DHCP_LEASE_TIME=12h \
-    DOMAIN=lan
+    DOMAIN=lan \
+    ENABLE_KEEPALIVED=false \
+    KEEPALIVED_VIRTUAL_ROUTER_ID=1
 
 ENTRYPOINT [ "/init" ]
 CMD [ "/etc/s6-overlay/scripts/wait" ]

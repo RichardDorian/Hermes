@@ -31,7 +31,7 @@ Configuration is made through environment variables.
 | `DHCP_LEASE_TIME`              | `12h`           | Duration of DHCP leases.                                                                                                           |
 | `DOMAIN`                       | `lan`           | Local domain name used for DNS resolution and hostname expansion of DHCP clients.                                                  |
 | `ENABLE_KEEPALIVED`            | `false`         | Whether to run `keepalived`, floating `LAN_ADDRESS` on `LAN_IF` via VRRP instead of assigning it statically.                       |
-| `KEEPALIVED_VIRTUAL_ROUTER_ID` | `51`            | VRRP router ID; must match across all nodes of the same HA pair and be unique on the LAN. Only used when `ENABLE_KEEPALIVED=true`. |
+| `KEEPALIVED_VIRTUAL_ROUTER_ID` | `1`             | VRRP router ID; must match across all nodes of the same HA pair and be unique on the LAN. Only used when `ENABLE_KEEPALIVED=true`. |
 
 ### High availability
 

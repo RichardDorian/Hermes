@@ -1,0 +1,13 @@
+#!/command/with-contenv sh
+
+if [ "$ENABLE_KEEPALIVED" != "true" ]; then
+  echo "ENABLE_KEEPALIVED=$ENABLE_KEEPALIVED, not starting keepalived"
+  # Mark the service down so s6 does not restart it
+  exec /command/s6-svc -Od .
+fi
+
+# Configure keepalived based on environment variables
+envsubst < /etc/keepalived/keepalived.conf.template > /etc/keepalived/keepalived.conf
+
+echo "Starting keepalived"
+exec keepalived --dont-fork --log-console --vrrp --use-file /etc/keepalived/keepalived.conf
