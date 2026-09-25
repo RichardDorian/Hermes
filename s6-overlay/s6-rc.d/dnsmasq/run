@@ -1,0 +1,7 @@
+#!/command/with-contenv sh
+
+# Configure dnsmasq based on environment variables
+envsubst < /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
+
+echo "Starting dnsmasq"
+exec dnsmasq --keep-in-foreground

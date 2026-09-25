@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Run as the container CMD so it owns the TTY: Ctrl+C (SIGINT) reaches this
+# script instead of being lost, and exiting it makes /init stop all services.
+trap 'echo "Received signal, stopping"; exit 0' INT TERM
+
+while :; do
+  sleep 3600 &
+  wait $!
+done

@@ -1,0 +1,13 @@
+#!/command/with-contenv sh
+
+if [ "$CONFIGURE_LAN" != "true" ]; then
+  echo "CONFIGURE_LAN=$CONFIGURE_LAN, skipping LAN interface configuration"
+  exit 0
+fi
+
+echo "Configuring $LAN_IF"
+ip link set dev "$LAN_IF" up
+
+# Replace makes it indempotent
+ip address replace "$LAN_ADDRESS/24" dev "$LAN_IF"
+echo "Address set to $LAN_ADDRESS/24 on interface $LAN_IF"

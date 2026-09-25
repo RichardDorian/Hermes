@@ -1,0 +1,31 @@
+#!/command/with-contenv sh
+
+if [ "$ENABLE_NAT" != "true" ]; then
+  echo "ENABLE_NAT=$ENABLE_NAT, skipping ip_forward and NAT rules"
+  exit 0
+fi
+
+echo "Configuring NAT"
+
+# Enable ip forward in the container's network namespace
+if [ "$(cat /proc/sys/net/ipv4/ip_forward)" = "1" ]; then
+  echo "ip_forward already enabled"
+elif [ -w /proc/sys/net/ipv4/ip_forward ]; then
+  echo 1 > /proc/sys/net/ipv4/ip_forward
+  echo "ip_forward enabled for this session ($(cat /proc/sys/net/ipv4/ip_forward))"
+else
+  echo "Cannot write to /proc/sys/net/ipv4/ip_forward, check container privileges / namespace" >&2
+  exit 1
+fi
+
+# Enable NAT to let other hosts access the upstream network
+echo "installing NAT rules: $LAN_IF (private) -> $WAN_IF (public)"
+
+iptables -t nat -C POSTROUTING -o "$WAN_IF" -j MASQUERADE 2>/dev/null || \
+  iptables -t nat -A POSTROUTING -o "$WAN_IF" -j MASQUERADE
+
+iptables -C FORWARD -i "$LAN_IF" -o "$WAN_IF" -j ACCEPT 2>/dev/null || \
+  iptables -A FORWARD -i "$LAN_IF" -o "$WAN_IF" -j ACCEPT
+
+iptables -C FORWARD -i "$WAN_IF" -o "$LAN_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || \
+  iptables -A FORWARD -i "$WAN_IF" -o "$LAN_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT
