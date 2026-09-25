@@ -21,8 +21,9 @@ fi
 # Enable NAT to let other hosts access the upstream network
 echo "installing NAT rules: $LAN_IF (private) -> $WAN_IF (public)"
 
-iptables -t nat -C POSTROUTING -o "$WAN_IF" -j MASQUERADE 2>/dev/null || \
-  iptables -t nat -A POSTROUTING -o "$WAN_IF" -j MASQUERADE
+# Source traffic from WAN_ADDRESS (floating with keepalived) rather than any other WAN_IF address
+iptables -t nat -C POSTROUTING -o "$WAN_IF" -j SNAT --to-source "${WAN_ADDRESS%/*}" 2>/dev/null || \
+  iptables -t nat -A POSTROUTING -o "$WAN_IF" -j SNAT --to-source "${WAN_ADDRESS%/*}"
 
 iptables -C FORWARD -i "$LAN_IF" -o "$WAN_IF" -j ACCEPT 2>/dev/null || \
   iptables -A FORWARD -i "$LAN_IF" -o "$WAN_IF" -j ACCEPT

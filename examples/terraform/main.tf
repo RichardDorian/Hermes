@@ -67,7 +67,7 @@ resource "proxmox_virtual_environment_container" "router-vnet100" {
       }
     }
 
-    # eth1: LAN, addressed by Hermes itself (CONFIGURE_LAN=true)
+    # eth1: LAN, addressed by Hermes itself
     ip_config {
       ipv4 {
         address = "manual"
@@ -88,6 +88,7 @@ resource "proxmox_virtual_environment_container" "router-vnet100" {
   # Must match the SDN subnet above
   environment_variables = {
     WAN_IF           = "eth0"
+    WAN_ADDRESS      = "192.168.1.10/24"
     LAN_IF           = "eth1"
     LAN_ADDRESS      = "10.1.100.254"
     DHCP_RANGE_START = "10.1.100.100"
