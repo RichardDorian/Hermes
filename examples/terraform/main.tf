@@ -83,16 +83,16 @@ resource "proxmox_virtual_environment_container" "router-vnet100" {
 
   # Must match the SDN subnet above
   environment_variables = {
-    WAN_IF            = "eth0"
-    WAN_ADDRESS       = "192.168.1.10"
-    WAN_NETMASK       = "255.255.255.0"
-    WAN_GATEWAY       = "192.168.1.1"
-    LAN_IF            = "eth1"
-    LAN_ADDRESS       = "10.0.0.253"
-    DHCP_RANGE_START  = "10.0.0.100"
-    DHCP_RANGE_END    = "10.0.0.200"
-    DHCP_NETMASK      = "255.255.255.0"
-    ENABLE_KEEPALIVED = "true"
-    KEEPALIVED_VIP    = "10.0.0.254"
+    WAN_IF      = "eth0"
+    WAN_ADDRESS = "192.168.1.10"
+    WAN_NETMASK = "255.255.255.0"
+    WAN_GATEWAY = "192.168.1.1"
+
+    LAN_IF      = "eth1"
+    LAN_ADDRESS = "10.0.0.254"
+
+    DHCP_RANGE_START = "10.0.0.100"
+    DHCP_RANGE_END   = "10.0.0.200"
+    DHCP_NETMASK     = "255.255.255.0"
   }
 }
