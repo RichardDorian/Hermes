@@ -55,7 +55,9 @@ already handed out.
 `keepalived` holds `KEEPALIVED_VIP` on a dedicated `vrrp.<KEEPALIVED_VIRTUAL_ROUTER_ID>` interface using the
 VRRP virtual MAC (`00:00:5e:00:01:<id>`), and `dnsmasq` serves DHCP/DNS on it. Clients therefore see
 `KEEPALIVED_VIP` as their DHCP server, so lease renewals reach whichever node is active, and the gateway keeps
-the same MAC address across failovers. For ARP requests for `KEEPALIVED_VIP` to be answered with the virtual
-MAC only, the containers need `net.ipv4.conf.all.arp_ignore=1` and `net.ipv4.conf.all.arp_announce=1`: Hermes
-sets them when `/proc/sys` is writable, otherwise pass them to the runtime (e.g. `--sysctl` with
-Docker/Podman).
+the same MAC address across failovers. Hermes also needs a few sysctls in the container:
+`net.ipv4.conf.all.arp_ignore=1` and `net.ipv4.conf.all.arp_announce=1`, so ARP requests for `KEEPALIVED_VIP`
+are only answered with the virtual MAC, and no strict reverse path filtering
+(`net.ipv4.conf.{all,default}.rp_filter` must not be `1`, Hermes uses `2`), since clients reach
+`KEEPALIVED_VIP` on the VMAC interface while the route back to them goes through `LAN_IF`. Hermes sets them
+when `/proc/sys` is writable, otherwise pass them to the runtime (e.g. `--sysctl` with Docker/Podman).
