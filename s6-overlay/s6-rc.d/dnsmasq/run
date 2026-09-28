@@ -1,11 +1,18 @@
 #!/command/with-contenv sh
 
-# With keepalived, dnsmasq only runs on the node holding LAN_ADDRESS; keepalived
-# starts and stops it on state changes (see /etc/s6-overlay/scripts/keepalived-notify)
-if [ "$ENABLE_KEEPALIVED" = "true" ] && ! ip -4 -o address show dev "$LAN_IF" | grep -q " $LAN_ADDRESS/"; then
-  echo "ENABLE_KEEPALIVED=true and $LAN_ADDRESS not on $LAN_IF, not starting dnsmasq"
-  # Mark the service down so s6 does not restart it
-  exec /command/s6-svc -Od .
+if [ "$ENABLE_KEEPALIVED" = "true" ]; then
+  # With keepalived, dnsmasq only runs on the node holding KEEPALIVED_VIP; keepalived
+  # starts and stops it on state changes (see /etc/s6-overlay/scripts/keepalived-notify)
+  if ! ip -4 -o address show dev "$LAN_IF" | grep -q " $KEEPALIVED_VIP/"; then
+    echo "ENABLE_KEEPALIVED=true and $KEEPALIVED_VIP not on $LAN_IF, not starting dnsmasq"
+    # Mark the service down so s6 does not restart it
+    exec /command/s6-svc -Od .
+  fi
+
+  # Clients must go through the floating address, not this node's own one
+  export ROUTER_ADDRESS="$KEEPALIVED_VIP"
+else
+  export ROUTER_ADDRESS="$LAN_ADDRESS"
 fi
 
 # Configure dnsmasq based on environment variables

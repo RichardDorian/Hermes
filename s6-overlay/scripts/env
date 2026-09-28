@@ -1,8 +1,13 @@
 #!/command/with-contenv sh
 
 # Required variables have no default, the Containerfile declares them empty
+required="WAN_ADDRESS WAN_GATEWAY"
+if [ "$ENABLE_KEEPALIVED" = "true" ]; then
+  required="$required KEEPALIVED_VIP"
+fi
+
 missing=0
-for name in WAN_ADDRESS WAN_GATEWAY; do
+for name in $required; do
   eval "value=\$$name"
   if [ -z "$value" ]; then
     echo "$name is required" >&2
