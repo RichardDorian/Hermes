@@ -13,7 +13,8 @@ COPY dnsmasq.conf /etc/dnsmasq.conf.template
 COPY keepalived.conf /etc/keepalived/keepalived.conf.template
 COPY s6-overlay /etc/s6-overlay
 
-ENV WAN_IF=eth0 \
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
+    WAN_IF=eth0 \
     WAN_ADDRESS= \
     WAN_NETMASK=255.255.255.0 \
     WAN_GATEWAY= \
