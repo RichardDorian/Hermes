@@ -3,8 +3,9 @@
 if [ "$ENABLE_KEEPALIVED" = "true" ]; then
   # With keepalived, dnsmasq only runs on the node holding KEEPALIVED_VIP; keepalived
   # starts and stops it on state changes (see /etc/s6-overlay/scripts/keepalived-notify)
-  if ! ip -4 -o address show dev "$LAN_IF" | grep -q " $KEEPALIVED_VIP/"; then
-    echo "ENABLE_KEEPALIVED=true and $KEEPALIVED_VIP not on $LAN_IF, not starting dnsmasq"
+  export DNSMASQ_IF="vrrp.$KEEPALIVED_VIRTUAL_ROUTER_ID"
+  if ! ip -4 -o address show dev "$DNSMASQ_IF" 2>/dev/null | grep -q " $KEEPALIVED_VIP/"; then
+    echo "ENABLE_KEEPALIVED=true and $KEEPALIVED_VIP not on $DNSMASQ_IF, not starting dnsmasq"
     # Mark the service down so s6 does not restart it
     exec /command/s6-svc -Od .
   fi
@@ -12,6 +13,7 @@ if [ "$ENABLE_KEEPALIVED" = "true" ]; then
   # Clients must go through the floating address, not this node's own one
   export ROUTER_ADDRESS="$KEEPALIVED_VIP"
 else
+  export DNSMASQ_IF="$LAN_IF"
   export ROUTER_ADDRESS="$LAN_ADDRESS"
 fi
 

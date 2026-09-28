@@ -16,6 +16,22 @@ for octet in $(echo "$WAN_NETMASK" | tr . ' '); do
 done
 export WAN_PREFIX
 
+# keepalived cannot apply its VMAC sysctls inside a container, set them here: only
+# answer ARP for an address on the interface holding it, so KEEPALIVED_VIP always
+# resolves to the virtual MAC rather than the one of LAN_IF
+for sysctl in arp_ignore arp_announce; do
+  path="/proc/sys/net/ipv4/conf/all/$sysctl"
+  if [ "$(cat "$path")" = "1" ]; then
+    echo "net.ipv4.conf.all.$sysctl already set to 1"
+  elif [ -w "$path" ]; then
+    echo 1 > "$path"
+    echo "net.ipv4.conf.all.$sysctl set to 1"
+  else
+    echo "Cannot write to $path, set net.ipv4.conf.all.$sysctl=1 on the container (e.g. --sysctl)" \
+      "or clients may resolve $KEEPALIVED_VIP to the MAC of $LAN_IF" >&2
+  fi
+done
+
 # Configure keepalived based on environment variables
 envsubst < /etc/keepalived/keepalived.conf.template > /etc/keepalived/keepalived.conf
 

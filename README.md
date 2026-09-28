@@ -51,3 +51,11 @@ configured per node. VRRP advertisements are unauthenticated, so only enable thi
 active and stops it otherwise, so only one DHCP server answers at a time. DHCP leases are stored in
 `/var/lib/hermes`; mount the same shared storage there on every node so the node taking over knows the leases
 already handed out.
+
+`keepalived` holds `KEEPALIVED_VIP` on a dedicated `vrrp.<KEEPALIVED_VIRTUAL_ROUTER_ID>` interface using the
+VRRP virtual MAC (`00:00:5e:00:01:<id>`), and `dnsmasq` serves DHCP/DNS on it. Clients therefore see
+`KEEPALIVED_VIP` as their DHCP server, so lease renewals reach whichever node is active, and the gateway keeps
+the same MAC address across failovers. For ARP requests for `KEEPALIVED_VIP` to be answered with the virtual
+MAC only, the containers need `net.ipv4.conf.all.arp_ignore=1` and `net.ipv4.conf.all.arp_announce=1`: Hermes
+sets them when `/proc/sys` is writable, otherwise pass them to the runtime (e.g. `--sysctl` with
+Docker/Podman).
