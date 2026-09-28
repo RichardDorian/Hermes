@@ -1,7 +1,18 @@
 #!/command/with-contenv sh
 
+# With keepalived, dnsmasq only runs on the node holding LAN_ADDRESS; keepalived
+# starts and stops it on state changes (see /etc/s6-overlay/scripts/keepalived-notify)
+if [ "$ENABLE_KEEPALIVED" = "true" ] && ! ip -4 -o address show dev "$LAN_IF" | grep -q " $LAN_ADDRESS/"; then
+  echo "ENABLE_KEEPALIVED=true and $LAN_ADDRESS not on $LAN_IF, not starting dnsmasq"
+  # Mark the service down so s6 does not restart it
+  exec /command/s6-svc -Od .
+fi
+
 # Configure dnsmasq based on environment variables
 envsubst < /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
+
+# Leases live in their own directory so it can be a mount shared between nodes
+mkdir -p /var/lib/hermes
 
 echo "Starting dnsmasq"
 exec dnsmasq --keep-in-foreground

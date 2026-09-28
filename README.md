@@ -37,11 +37,16 @@ Configuration is made through environment variables.
 
 ### High availability
 
-Setting `ENABLE_KEEPALIVED=true` runs `keepalived` alongside `dnsmasq` and hands it ownership of `LAN_ADDRESS`
-on `LAN_IF` instead of assigning it statically. Run two Hermes containers with the same `LAN_ADDRESS` and
+Setting `ENABLE_KEEPALIVED=true` runs `keepalived` and hands it ownership of `LAN_ADDRESS` on `LAN_IF` instead
+of assigning it statically. Run two Hermes containers with the same `LAN_ADDRESS` and
 `KEEPALIVED_VIRTUAL_ROUTER_ID`, and `keepalived` will float the address to whichever node is reachable, giving
 the virtual network a highly available gateway/DHCP/DNS server. `WAN_ADDRESS` and the default route via
 `WAN_GATEWAY` are floated on `WAN_IF` in the same VRRP instance as `LAN_ADDRESS`, so they always move to the
 same node. Every node starts with the same priority, so which one currently holds the addresses is decided
 automatically by VRRP rather than configured per node. VRRP advertisements are unauthenticated, so only enable
 this on a LAN you trust.
+
+`dnsmasq` only runs on the node currently holding the addresses: `keepalived` starts it when the node becomes
+active and stops it otherwise, so only one DHCP server answers at a time. DHCP leases are stored in
+`/var/lib/hermes`; mount the same shared storage there on every node so the node taking over knows the leases
+already handed out.

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Called by keepalived with: <INSTANCE|GROUP> <name> <state> <priority>
+case "$3" in
+  MASTER)
+    echo "keepalived entered $3 state, starting dnsmasq"
+    /command/s6-svc -u /run/service/dnsmasq
+    ;;
+  *)
+    echo "keepalived entered $3 state, stopping dnsmasq"
+    /command/s6-svc -d /run/service/dnsmasq
+    ;;
+esac
