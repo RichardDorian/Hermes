@@ -18,23 +18,24 @@ server, and DNS server. That container is Hermes.
 
 Configuration is made through environment variables.
 
-| Name                           | Default         | Description                                                                                                                                      |
-| ------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `WAN_IF`                       | `eth0`          | Network interface connected to the WAN (upstream network).                                                                                       |
-| `WAN_ADDRESS`                  |                 | Required. IP address of the WAN interface, used as the NAT source. Floated by `keepalived` when `ENABLE_KEEPALIVED=true`.                        |
-| `WAN_NETMASK`                  | `255.255.255.0` | Netmask of the WAN network.                                                                                                                      |
-| `WAN_GATEWAY`                  |                 | Required. Upstream gateway, installed as the default route on `WAN_IF`. Follows `WAN_ADDRESS` when `ENABLE_KEEPALIVED=true`.                     |
-| `LAN_IF`                       | `eth1`          | Network interface connected to the LAN, served by dnsmasq for DNS/DHCP.                                                                          |
-| `LAN_ADDRESS`                  | `10.0.0.253`    | IP address of the LAN interface; advertised to DHCP clients as the router and DNS server. Must be unique per node when `ENABLE_KEEPALIVED=true`. |
-| `ENABLE_NAT`                   | `true`          | Whether to enable `ip_forward` and install NAT/forwarding `iptables` rules.                                                                      |
-| `DHCP_RANGE_START`             | `10.0.0.100`    | First address in the DHCP pool handed out to LAN clients.                                                                                        |
-| `DHCP_RANGE_END`               | `10.0.0.200`    | Last address in the DHCP pool handed out to LAN clients.                                                                                         |
-| `DHCP_NETMASK`                 | `255.255.255.0` | Netmask advertised for the DHCP range.                                                                                                           |
-| `DHCP_LEASE_TIME`              | `12h`           | Duration of DHCP leases.                                                                                                                         |
-| `DOMAIN`                       | `lan`           | Local domain name used for DNS resolution and hostname expansion of DHCP clients.                                                                |
-| `ENABLE_KEEPALIVED`            | `false`         | Whether to run `keepalived`, floating `KEEPALIVED_VIP` on `LAN_IF` and `WAN_ADDRESS` on `WAN_IF` via VRRP.                                       |
-| `KEEPALIVED_VIP`               | `10.0.0.254`    | Floating LAN address, advertised to DHCP clients as the router and DNS server instead of `LAN_ADDRESS`. Only used when `ENABLE_KEEPALIVED=true`. |
-| `KEEPALIVED_VIRTUAL_ROUTER_ID` | `1`             | VRRP router ID; must match across all nodes of the same HA pair and be unique on the LAN. Only used when `ENABLE_KEEPALIVED=true`.               |
+| Name                           | Default         | Description                                                                                                                                                                               |
+| ------------------------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WAN_IF`                       | `eth0`          | Network interface connected to the WAN (upstream network).                                                                                                                                |
+| `WAN_ADDRESS`                  |                 | Required. IP address of the WAN interface, used as the NAT source. Floated by `keepalived` when `ENABLE_KEEPALIVED=true`.                                                                 |
+| `WAN_NETMASK`                  | `255.255.255.0` | Netmask of the WAN network.                                                                                                                                                               |
+| `WAN_GATEWAY`                  |                 | Required. Upstream gateway, installed as the default route on `WAN_IF`. Follows `WAN_ADDRESS` when `ENABLE_KEEPALIVED=true`.                                                              |
+| `LAN_IF`                       | `eth1`          | Network interface connected to the LAN, served by dnsmasq for DNS/DHCP.                                                                                                                   |
+| `LAN_ADDRESS`                  | `10.0.0.253`    | IP address of the LAN interface; advertised to DHCP clients as the router and DNS server. Must be unique per node when `ENABLE_KEEPALIVED=true`.                                          |
+| `ENABLE_NAT`                   | `true`          | Whether to enable `ip_forward` and install NAT/forwarding `iptables` rules.                                                                                                               |
+| `DHCP_RANGE_START`             | `10.0.0.100`    | First address in the DHCP pool handed out to LAN clients.                                                                                                                                 |
+| `DHCP_RANGE_END`               | `10.0.0.200`    | Last address in the DHCP pool handed out to LAN clients.                                                                                                                                  |
+| `DHCP_NETMASK`                 | `255.255.255.0` | Netmask advertised for the DHCP range.                                                                                                                                                    |
+| `DHCP_LEASE_TIME`              | `12h`           | Duration of DHCP leases.                                                                                                                                                                  |
+| `DHCP_STATIC_LEASES`           | `{}`            | JSON object of MAC address to IP address (e.g. `{"bc:24:11:aa:bb:cc": "10.0.0.10"}`) always handed to those clients. The IP must be in the LAN subnet, not necessarily in the DHCP range. |
+| `DOMAIN`                       | `lan`           | Local domain name used for DNS resolution and hostname expansion of DHCP clients.                                                                                                         |
+| `ENABLE_KEEPALIVED`            | `false`         | Whether to run `keepalived`, floating `KEEPALIVED_VIP` on `LAN_IF` and `WAN_ADDRESS` on `WAN_IF` via VRRP.                                                                                |
+| `KEEPALIVED_VIP`               | `10.0.0.254`    | Floating LAN address, advertised to DHCP clients as the router and DNS server instead of `LAN_ADDRESS`. Only used when `ENABLE_KEEPALIVED=true`.                                          |
+| `KEEPALIVED_VIRTUAL_ROUTER_ID` | `1`             | VRRP router ID; must match across all nodes of the same HA pair and be unique on the LAN. Only used when `ENABLE_KEEPALIVED=true`.                                                        |
 
 ### High availability
 

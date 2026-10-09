@@ -1,7 +1,7 @@
 FROM docker.io/library/debian:trixie-slim
 
 RUN apt update && \
-  apt install -y --no-install-recommends dnsmasq keepalived iptables iproute2 gettext-base xz-utils && \
+  apt install -y --no-install-recommends dnsmasq keepalived iptables iproute2 gettext-base jq xz-utils && \
   rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.3.2/s6-overlay-noarch.tar.xz /tmp
@@ -25,6 +25,7 @@ ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     DHCP_RANGE_END=10.0.0.200 \
     DHCP_NETMASK=255.255.255.0 \
     DHCP_LEASE_TIME=12h \
+    DHCP_STATIC_LEASES='{}' \
     DOMAIN=lan \
     ENABLE_KEEPALIVED=false \
     KEEPALIVED_VIP=10.0.0.254 \

@@ -20,6 +20,9 @@ fi
 # Configure dnsmasq based on environment variables
 envsubst < /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
 
+# One "<mac>,<ip>" line per static lease (validated by the env service)
+echo "$DHCP_STATIC_LEASES" | jq -r 'to_entries[] | "\(.key),\(.value)"' > /etc/dnsmasq.static-leases
+
 # Leases live in their own directory so it can be a mount shared between nodes
 mkdir -p /var/lib/hermes
 

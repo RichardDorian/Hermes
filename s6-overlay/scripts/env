@@ -15,4 +15,10 @@ for name in $required; do
   fi
 done
 
+# DHCP_STATIC_LEASES maps MAC addresses to IP addresses
+if ! echo "$DHCP_STATIC_LEASES" | jq -e 'type == "object" and all(.[]; type == "string")' >/dev/null 2>&1; then
+  echo "DHCP_STATIC_LEASES must be a JSON object of MAC address to IP address strings" >&2
+  missing=1
+fi
+
 exit $missing
