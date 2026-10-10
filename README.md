@@ -84,7 +84,7 @@ kernel module (containers cannot load it themselves). A client configuration loo
 [Interface]
 PrivateKey = <client private key>
 Address = 10.0.0.50/32
-DNS = 10.0.0.253
+DNS = 10.0.0.254
 
 [Peer]
 PublicKey = <public key of WIREGUARD_PRIVATE_KEY>
@@ -92,9 +92,10 @@ Endpoint = <WAN_ADDRESS>:51820
 AllowedIPs = 10.0.0.0/24
 ```
 
-Use `KEEPALIVED_VIP` as `DNS` with `ENABLE_KEEPALIVED=true`: the WireGuard server then follows the floating
-addresses like `dnsmasq`. A new node has no session with the clients, which reconnect within about 15 seconds of
-sending traffic after a failover.
+`DNS` is `LAN_ADDRESS`, or `KEEPALIVED_VIP` with `ENABLE_KEEPALIVED=true`: both are the `.254` address of the
+LAN when following the recommendations. With `keepalived`, the WireGuard server follows the floating addresses
+like `dnsmasq`. A new node has no session with the clients, which reconnect within about 15 seconds of sending
+traffic after a failover.
 
 ### High availability
 
