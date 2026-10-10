@@ -1,0 +1,12 @@
+#!/command/with-contenv sh
+
+# Deleting wg0 also removes the routes through it
+ip link del wg0 2>/dev/null
+
+echo "$WIREGUARD_PEERS" | jq -r 'keys[]' 2>/dev/null | while read -r address; do
+  ip neigh del proxy "$address" dev "vrrp.$KEEPALIVED_VIRTUAL_ROUTER_ID" 2>/dev/null
+  ip neigh del proxy "$address" dev "$LAN_IF" 2>/dev/null
+done
+
+# Never fail, s6 restarts the service anyway
+exit 0

@@ -36,6 +36,10 @@ Configuration is made through environment variables.
 | `ENABLE_KEEPALIVED`            | `false`         | Whether to run `keepalived`, floating `KEEPALIVED_VIP` on `LAN_IF` and `WAN_ADDRESS` on `WAN_IF` via VRRP.                                                                                |
 | `KEEPALIVED_VIP`               | `10.0.0.254`    | Floating LAN address, advertised to DHCP clients as the router and DNS server instead of `LAN_ADDRESS`. Only used when `ENABLE_KEEPALIVED=true`.                                          |
 | `KEEPALIVED_VIRTUAL_ROUTER_ID` | `1`             | VRRP router ID; must match across all nodes of the same HA pair and be unique on the LAN. Only used when `ENABLE_KEEPALIVED=true`.                                                        |
+| `ENABLE_WIREGUARD`             | `false`         | Whether to run a WireGuard server giving `WIREGUARD_PEERS` access to the LAN.                                                                                                             |
+| `WIREGUARD_PRIVATE_KEY`        |                 | Required when `ENABLE_WIREGUARD=true`. Private key of the WireGuard server (`wg genkey`).                                                                                                 |
+| `WIREGUARD_PORT`               | `51820`         | UDP port the WireGuard server listens on.                                                                                                                                                 |
+| `WIREGUARD_PEERS`              | `{}`            | JSON object of LAN IP address to public key (e.g. `{"10.0.0.50": "<public key>"}`) of the clients allowed to connect.                                                                     |
 
 ### High availability
 
@@ -62,3 +66,29 @@ are only answered with the virtual MAC, and no strict reverse path filtering
 (`net.ipv4.conf.{all,default}.rp_filter` must not be `1`, Hermes uses `2`), since clients reach
 `KEEPALIVED_VIP` on the VMAC interface while the route back to them goes through `LAN_IF`. Hermes sets them
 when `/proc/sys` is writable, otherwise pass them to the runtime (e.g. `--sysctl` with Docker/Podman).
+
+### WireGuard
+
+Setting `ENABLE_WIREGUARD=true` runs a WireGuard server on `WIREGUARD_PORT`, reachable on `WAN_ADDRESS`. Each
+entry of `WIREGUARD_PEERS` gives a client an address on the LAN: Hermes routes it through the tunnel and
+answers ARP requests for it, so LAN hosts reach the client as if it was on the LAN. Pick peer addresses in the
+LAN subnet but outside the DHCP range, and make sure the host loads the `wireguard` kernel module (containers
+cannot load it themselves).
+
+A client configuration looks like:
+
+```ini
+[Interface]
+PrivateKey = <client private key>
+Address = 10.0.0.50/32
+DNS = 10.0.0.253
+
+[Peer]
+PublicKey = <public key of WIREGUARD_PRIVATE_KEY>
+Endpoint = <WAN_ADDRESS>:51820
+AllowedIPs = 10.0.0.0/24
+```
+
+Use `KEEPALIVED_VIP` as `DNS` with `ENABLE_KEEPALIVED=true`: the WireGuard server then follows the floating
+addresses like `dnsmasq`. A new node has no session with the clients, which reconnect within about 15 seconds
+of sending traffic after a failover.

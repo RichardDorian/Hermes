@@ -20,6 +20,11 @@ fi
 # Configure dnsmasq based on environment variables
 envsubst < /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
 
+if [ "$ENABLE_WIREGUARD" = "true" ]; then
+  # Answer DNS queries from wireguard peers, there is no DHCP over the tunnel
+  printf 'interface=wg0\nno-dhcp-interface=wg0\n' >> /etc/dnsmasq.conf
+fi
+
 # One "<mac>,<ip>" line per static lease (validated by the env service)
 echo "$DHCP_STATIC_LEASES" | jq -r 'to_entries[] | "\(.key),\(.value)"' > /etc/dnsmasq.static-leases
 

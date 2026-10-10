@@ -1,0 +1,44 @@
+#!/command/with-contenv sh
+
+if [ "$ENABLE_WIREGUARD" != "true" ]; then
+  echo "ENABLE_WIREGUARD=$ENABLE_WIREGUARD, not starting wireguard"
+  # Mark the service down so s6 does not restart it
+  exec /command/s6-svc -Od .
+fi
+
+if [ "$ENABLE_KEEPALIVED" = "true" ]; then
+  # Like dnsmasq, wireguard only runs on the node holding KEEPALIVED_VIP; keepalived
+  # starts and stops it on state changes (see /etc/s6-overlay/scripts/keepalived-notify)
+  proxy_if="vrrp.$KEEPALIVED_VIRTUAL_ROUTER_ID"
+  if ! ip -4 -o address show dev "$proxy_if" 2>/dev/null | grep -q " $KEEPALIVED_VIP/"; then
+    echo "ENABLE_KEEPALIVED=true and $KEEPALIVED_VIP not on $proxy_if, not starting wireguard"
+    exec /command/s6-svc -Od .
+  fi
+else
+  proxy_if="$LAN_IF"
+fi
+
+echo "Starting wireguard on port $WIREGUARD_PORT"
+if ! ip link add wg0 type wireguard; then
+  echo "Cannot create the wg0 interface, is the wireguard kernel module loaded on the host?" >&2
+  exec /command/s6-svc -Od .
+fi
+
+# wg only reads the private key from a file
+umask 077
+echo "$WIREGUARD_PRIVATE_KEY" > /run/wireguard.key
+wg set wg0 listen-port "$WIREGUARD_PORT" private-key /run/wireguard.key
+rm /run/wireguard.key
+ip link set wg0 up
+
+# WIREGUARD_PEERS maps each peer's address on the LAN to its public key
+echo "$WIREGUARD_PEERS" | jq -r 'to_entries[] | "\(.key) \(.value)"' | while read -r address public_key; do
+  wg set wg0 peer "$public_key" allowed-ips "$address/32"
+  ip route replace "$address/32" dev wg0
+  # Answer ARP requests for the peer on the LAN, so LAN hosts reach it through Hermes
+  ip neigh replace proxy "$address" dev "$proxy_if"
+  echo "Added wireguard peer $address"
+done
+
+# Nothing to supervise, the interface lives in the kernel: stay up until stopped
+exec /command/s6-pause

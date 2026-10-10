@@ -1,7 +1,7 @@
 FROM docker.io/library/debian:trixie-slim
 
 RUN apt update && \
-  apt install -y --no-install-recommends dnsmasq keepalived iptables iproute2 gettext-base jq xz-utils && \
+  apt install -y --no-install-recommends dnsmasq keepalived iptables iproute2 gettext-base jq wireguard-tools xz-utils && \
   rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.3.2/s6-overlay-noarch.tar.xz /tmp
@@ -29,7 +29,11 @@ ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     DOMAIN=lan \
     ENABLE_KEEPALIVED=false \
     KEEPALIVED_VIP=10.0.0.254 \
-    KEEPALIVED_VIRTUAL_ROUTER_ID=1
+    KEEPALIVED_VIRTUAL_ROUTER_ID=1 \
+    ENABLE_WIREGUARD=false \
+    WIREGUARD_PRIVATE_KEY= \
+    WIREGUARD_PORT=51820 \
+    WIREGUARD_PEERS='{}'
 
 ENTRYPOINT [ "/init" ]
 CMD [ "/etc/s6-overlay/scripts/wait" ]

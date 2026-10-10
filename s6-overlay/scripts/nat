@@ -24,6 +24,10 @@ lan_ifs="$LAN_IF"
 if [ "$ENABLE_KEEPALIVED" = "true" ]; then
   lan_ifs="$lan_ifs vrrp.$KEEPALIVED_VIRTUAL_ROUTER_ID"
 fi
+# Wireguard peers are part of the LAN
+if [ "$ENABLE_WIREGUARD" = "true" ]; then
+  lan_ifs="$lan_ifs wg0"
+fi
 
 echo "installing NAT rules: $lan_ifs (private) -> $WAN_IF (public)"
 

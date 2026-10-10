@@ -5,6 +5,9 @@ required="WAN_ADDRESS WAN_GATEWAY"
 if [ "$ENABLE_KEEPALIVED" = "true" ]; then
   required="$required KEEPALIVED_VIP"
 fi
+if [ "$ENABLE_WIREGUARD" = "true" ]; then
+  required="$required WIREGUARD_PRIVATE_KEY"
+fi
 
 missing=0
 for name in $required; do
@@ -18,6 +21,12 @@ done
 # DHCP_STATIC_LEASES maps MAC addresses to IP addresses
 if ! echo "$DHCP_STATIC_LEASES" | jq -e 'type == "object" and all(.[]; type == "string")' >/dev/null 2>&1; then
   echo "DHCP_STATIC_LEASES must be a JSON object of MAC address to IP address strings" >&2
+  missing=1
+fi
+
+# WIREGUARD_PEERS maps IP addresses to public keys
+if ! echo "$WIREGUARD_PEERS" | jq -e 'type == "object" and all(.[]; type == "string")' >/dev/null 2>&1; then
+  echo "WIREGUARD_PEERS must be a JSON object of IP address to public key strings" >&2
   missing=1
 fi
 
