@@ -1,5 +1,11 @@
 #!/command/with-contenv sh
 
+if [ "$ENABLE_DNS" != "true" ] && [ "$ENABLE_DHCP" != "true" ]; then
+  echo "ENABLE_DNS=$ENABLE_DNS and ENABLE_DHCP=$ENABLE_DHCP, not starting dnsmasq"
+  # Mark the service down so s6 does not restart it
+  exec /command/s6-svc -Od .
+fi
+
 if [ "$ENABLE_KEEPALIVED" = "true" ]; then
   # With keepalived, dnsmasq only runs on the node holding KEEPALIVED_VIP; keepalived
   # starts and stops it on state changes (see /etc/s6-overlay/scripts/keepalived-notify)
@@ -17,6 +23,13 @@ else
   export ROUTER_ADDRESS="$LAN_ADDRESS"
 fi
 
+if [ "$ENABLE_DNS" = "true" ]; then
+  export DNS_PORT=53
+else
+  echo "ENABLE_DNS=$ENABLE_DNS, dnsmasq only serves DHCP"
+  export DNS_PORT=0
+fi
+
 # Configure dnsmasq based on environment variables
 envsubst < /etc/dnsmasq.conf.template > /etc/dnsmasq.conf
 
@@ -25,8 +38,19 @@ if [ "$ENABLE_WIREGUARD" = "true" ]; then
   printf 'interface=wg0\nno-dhcp-interface=wg0\n' >> /etc/dnsmasq.conf
 fi
 
-# One "<mac>,<ip>" line per static lease (validated by the env service)
-echo "$DHCP_STATIC_LEASES" | jq -r 'to_entries[] | "\(.key),\(.value)"' > /etc/dnsmasq.static-leases
+if [ "$ENABLE_DHCP" = "true" ]; then
+  envsubst < /etc/dnsmasq-dhcp.conf.template >> /etc/dnsmasq.conf
+
+  # Only advertise this node as DNS server when it answers DNS queries
+  if [ "$ENABLE_DNS" = "true" ]; then
+    echo "dhcp-option=option:dns-server,$ROUTER_ADDRESS" >> /etc/dnsmasq.conf
+  fi
+
+  # One "<mac>,<ip>" line per static lease (validated by the env service)
+  echo "$DHCP_STATIC_LEASES" | jq -r 'to_entries[] | "\(.key),\(.value)"' > /etc/dnsmasq.static-leases
+else
+  echo "ENABLE_DHCP=$ENABLE_DHCP, dnsmasq only serves DNS"
+fi
 
 # Leases live in their own directory so it can be a mount shared between nodes
 mkdir -p /var/lib/hermes

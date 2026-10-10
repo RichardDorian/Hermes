@@ -10,6 +10,7 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.3.2/s6-
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 COPY dnsmasq.conf /etc/dnsmasq.conf.template
+COPY dnsmasq-dhcp.conf /etc/dnsmasq-dhcp.conf.template
 COPY keepalived.conf /etc/keepalived/keepalived.conf.template
 COPY s6-overlay /etc/s6-overlay
 
@@ -21,6 +22,8 @@ ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     LAN_IF=eth1 \
     ENABLE_NAT=true \
     LAN_ADDRESS=10.0.0.253 \
+    ENABLE_DNS=true \
+    ENABLE_DHCP=true \
     DHCP_RANGE_START=10.0.0.100 \
     DHCP_RANGE_END=10.0.0.200 \
     DHCP_NETMASK=255.255.255.0 \

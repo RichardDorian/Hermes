@@ -2,8 +2,8 @@
 
 All in one router as a container. This OCI image provides:
 
-- **DNS proxy** (no caching) using `dnsmasq`.
-- **DHCP server** using `dnsmasq`.
+- **DNS proxy** (optional, no caching) using `dnsmasq`.
+- **DHCP server** (optional) using `dnsmasq`.
 - **Hostname resolution** to resolve DHCP clients using `dnsmasq`.
 - **NAT** to give internet access to the virtual network.
 - **High availability** (opt-in) using `keepalived`, floating the LAN address across a pair of nodes via VRRP.
@@ -27,6 +27,8 @@ Configuration is made through environment variables.
 | `LAN_IF`                       | `eth1`          | Network interface connected to the LAN, served by dnsmasq for DNS/DHCP.                                                                                                                   |
 | `LAN_ADDRESS`                  | `10.0.0.253`    | IP address of the LAN interface; advertised to DHCP clients as the router and DNS server. Must be unique per node when `ENABLE_KEEPALIVED=true`.                                          |
 | `ENABLE_NAT`                   | `true`          | Whether to enable `ip_forward` and install NAT/forwarding `iptables` rules.                                                                                                               |
+| `ENABLE_DNS`                   | `true`          | Whether to serve DNS on the LAN. When `false`, DHCP clients are not given a DNS server. `dnsmasq` does not run when both `ENABLE_DNS` and `ENABLE_DHCP` are `false`.                      |
+| `ENABLE_DHCP`                  | `true`          | Whether to serve DHCP on the LAN. When `false`, the other `DHCP_*` variables are ignored.                                                                                                 |
 | `DHCP_RANGE_START`             | `10.0.0.100`    | First address in the DHCP pool handed out to LAN clients.                                                                                                                                 |
 | `DHCP_RANGE_END`               | `10.0.0.200`    | Last address in the DHCP pool handed out to LAN clients.                                                                                                                                  |
 | `DHCP_NETMASK`                 | `255.255.255.0` | Netmask advertised for the DHCP range.                                                                                                                                                    |
